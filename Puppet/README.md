@@ -2,4 +2,4 @@
 
 ## lab-5
 
-Basic manifest installing and nginx server
+Basic manifest installing an nginx server
