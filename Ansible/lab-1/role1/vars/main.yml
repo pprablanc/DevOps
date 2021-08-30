@@ -1,6 +1,0 @@
-liste:
-  - Formation Ansible
-  - Brahim Hamdi
-  - brahim.hamdi.consult@gmail.com
-  - formateur
-package: ['nginx','mariadb-client','php-mbstring','php-fpm','php-xml','php-intl','php-mysql']
