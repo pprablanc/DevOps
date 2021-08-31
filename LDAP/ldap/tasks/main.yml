@@ -1,0 +1,62 @@
+- name: definining openldap install settings
+  debconf:
+    name: slapd
+    question: "{{ item['question'] }}"
+    value: "{{ item['value'] }}"
+    vtype: "{{ item['vtype'] }}"
+  become: true
+  #changed_when: false
+  #  no_log: true
+  loop:
+    - question: slapd/internal/generated_adminpw
+      value: "{{ openldap_admin_password }}"
+      vtype: password
+    - question: slapd/password2
+      value: "{{ openldap_admin_password }}"
+      vtype: password
+    - question: slapd/internal/adminpw
+      value: "{{ openldap_admin_password }}"
+      vtype: password
+    - question: slapd/password1
+      value: "{{ openldap_admin_password }}"
+      vtype: password
+    - question: slapd/domain
+      value: "{{ openldap_domain_name }}"
+      vtype: string
+    - question: shared/organization
+      value: "{{ openldap_org }}"
+      vtype: string
+
+- name: Install package
+  package:
+    name: "{{ package }}"
+    state: latest
+  tags: package
+  notify: start slapd
+
+- name: Copy ldap entry file
+  copy:
+    src: files/atos.ldif
+    dest: /tmp/atos.ldif
+
+- name: Install python-ldap python package
+  pip:
+    name: python-ldap
+
+- name: add LDAP entry - org
+  community.general.ldap_entry:
+    dn: ou=employes,dc=atos,dc=fr
+    objectClass: organizationalUnit
+    bind_dn: cn=admin,dc=atos,dc=fr
+    bind_pw: "{{ openldap_admin_password }}"
+
+
+- name: Add content ldif
+  ignore_errors: yes
+  expect: 
+    command: "ldapadd -cxWD cn=admin,dc=atos,dc=fr -f /tmp/atos.ldif"
+    responses:
+      'Enter LDAP Password:' : "{{ openldap_admin_password }}"
+            
+
+

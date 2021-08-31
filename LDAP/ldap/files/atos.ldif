@@ -1,0 +1,28 @@
+dn: ou=employes,dc=atos,dc=fr
+objectClass: organizationalUnit
+ou: employes
+
+dn: ou=fournisseur,dc=atos,dc=fr
+objectClass: organizationalUnit
+ou: fournisseur
+
+dn: cn=brahim,ou=employes,dc=atos,dc=fr
+objectClass: person
+cn: brahim
+sn: hamdi
+description: formateur
+telephoneNumber: 5550001
+
+dn: cn=aboubaker,ou=employes,dc=atos,dc=fr
+objectClass: person
+cn: aboubaker
+sn: diallo
+description: dev
+telephoneNumber: 5550002
+
+dn: cn=damien,ou=employes,dc=atos,dc=fr
+objectClass: person
+cn: damien
+sn: viniere
+description: sysadmin
+telephoneNumber: 5550069

@@ -1,0 +1,6 @@
+package: ['slapd','ldap-utils']
+openldap_admin_password: admin
+openldap_admin_user: admin
+openldap_domain_name: atos.fr
+openldap_org: atos.fr
+openldap_db_engine: mdb 

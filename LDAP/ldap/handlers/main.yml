@@ -1,0 +1,4 @@
+- name: start slapd
+  service:
+    name: slapd
+    state: started
