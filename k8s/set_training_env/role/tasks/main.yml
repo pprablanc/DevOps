@@ -1,0 +1,27 @@
+- name: Install desktop environment
+  block:
+    - name: Install the Gnome desktop environment group
+      yum:
+        name: "@^gnome-desktop-environment"
+        state: present
+
+    - name: Create .xinitrc
+      copy: 
+        dest: "/home/vagrant/.xinitrc"
+        content: "exec gnome-session" 
+
+    - name: Set graphical session permanently
+      file: 
+        src: /usr/lib/systemd/system/graphical.target
+        dest: /etc/systemd/system/default.target
+        state: link
+
+
+- name: Install packages
+  block:
+    - name: Install packages required in k8s training environement
+      package:
+        name: "{{ packages }}"
+        state: latest
+
+

@@ -1,0 +1,6 @@
+- name: test usage ansible par Vagrant
+  hosts: all
+  gather_facts: true
+  become: yes
+  roles:
+    - role
