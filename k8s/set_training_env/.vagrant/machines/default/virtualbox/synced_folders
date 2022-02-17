@@ -1,1 +1,0 @@
-{"rsync":{"/vagrant":{"type":"rsync","guestpath":"/vagrant","hostpath":"/home/pierre/Documents/Projects/Programmation/Github/My_Repo/k8s/set_training_env","disabled":false,"__vagrantfile":true,"owner":"vagrant","group":"vagrant"}}}
