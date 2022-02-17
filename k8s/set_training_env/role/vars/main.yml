@@ -1,1 +1,3 @@
-packages: ['git']
+packages: ['git', # dev tools
+  'epel-release','install' 'perl' 'gcc' 'dkms' 'kernel-devel' 'kernel-headers' 'make' 'bzip2' # virtualbox guest additions
+]
