@@ -1,1 +1,2 @@
-packages: ['git']
+packages: ['git', 'libvirt', 'qemu-kvm', 'virt-install', 'virt-top', 'libguestfs-tools', 'bridge-utils']
+
