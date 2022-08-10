@@ -17,8 +17,38 @@
         state: link
 
 
-          #- name: Install docker
+- name: Install docker
+  block:
+    - name: Install yum-utils
+      package:
+        name: yum-utils
+        state: latest
 
+
+    - name: Add docker-ce repo
+      command: 
+        cmd: yum-config-manager --add-repo "https://download.docker.com/linux/centos/docker-ce.repo"
+
+    - name: Install docker packages
+      package:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - docker-compose-plugin
+          - containerd.io
+        state: latest
+
+    - name: Add user to docker group
+      user:
+        name: vagrant
+        group: docker
+        append: yes
+
+    - name: Start docker
+      systemd:
+        state: started
+        name: docker
+        enabled: yes
 
 - name: Install minikube
   block:
@@ -57,6 +87,7 @@
         dest: /home/vagrant/
         owner: vagrant
         mode: '0750'
+        force: no
 
 
     - name: Move minikube to /usr/local/bin
@@ -65,6 +96,15 @@
         dest: /usr/local/bin/minikube
         state: hard
 
-          #curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
-          #chmod +x kubectl
-          #sudo mv kubectl  /usr/local/bin/
+- name: Move kubernetes labs resources in VM
+  block:
+    - name: Move resources folder to VM
+      copy:
+        src: ./resources
+        dest: /home/vagrant
+        owner: vagrant
+        group: vagrant
+        mode: '0744'
+
+
+
