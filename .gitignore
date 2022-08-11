@@ -1,1 +1,2 @@
 k8s/set_training_env/.vagrant/
+k8s/set_training_env/*.log
