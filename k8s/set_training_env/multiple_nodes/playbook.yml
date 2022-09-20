@@ -1,0 +1,6 @@
+- name: Provision VMs created with Vagrant
+  hosts: all
+  gather_facts: true
+  become: yes
+  roles:
+    - role

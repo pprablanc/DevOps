@@ -1,0 +1,70 @@
+- name: Update packages
+  apt:
+    name: "*"
+    state: latest
+
+
+- name: Install packages
+  package:
+    name: "{{ packages_1 }}"
+    state: latest
+
+- name: Add apt key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+    state: present
+
+- name: Add apt key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg    
+    state: present
+
+- name: Write kubernetes.list file
+  copy:
+    content: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+    dest: /etc/apt/sources.list.d/kubernetes.list
+
+- name: Update packages
+  apt:
+    name: "*"
+    state: latest
+
+- name: default kubelet
+  shell: echo "KUBELET_EXTRA_ARGS=--node-ip="$(ip addr show eth1  | awk '$1 == "inet" { print $2 }' | cut -d/ -f1) | sudo tee /etc/default/kubelet
+
+- name: Install docker/kubernetes packages
+  block:
+    - name: Install through apt
+      package:
+        name: "{{ packages_2 }}"
+        state: latest
+
+    - name: Install Kubelet with snap
+      snap:
+        name: 
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+        classic: true
+
+- name: Disable swap for kubernetes
+  block:
+    - name: swapoff (1/2)
+      shell: |
+        swapoff -a
+        #when: kubernetes_installed is changed
+    - name: Modify fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+          #when: kubernetes_installed is changed
+
+
+

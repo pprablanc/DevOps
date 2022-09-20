@@ -1,2 +1,2 @@
-k8s/set_training_env/.vagrant/
-k8s/set_training_env/*.log
+k8s/set_training_env/minikube/.vagrant/
+k8s/set_training_env/minikube/*.log
