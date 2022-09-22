@@ -14,10 +14,23 @@
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
 
-- name: Add repository
+- name: Add ubuntu focal stable repository
   apt_repository:
     repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
     state: present
+
+
+- name: Add repository for cri-tools
+  block:
+    - name: Add repository for cri-tools (1/2)
+      apt_repository:
+        repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ OS }}/ /"
+        state: present
+    - name: Add repository for cri-tools (2/2)
+      apt_repository:
+        repo: "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ CRIO_VERSION }}/{{ OS }}/ /"
+        state: present
+
 
 - name: Add apt key
   apt_key:
@@ -44,7 +57,7 @@
         name: "{{ packages_2 }}"
         state: latest
 
-    - name: Install Kubelet with snap
+    - name: Install kubernetes packages with snap
       snap:
         name: 
           - kubelet
@@ -53,18 +66,29 @@
         state: present
         classic: true
 
+    - name: Add user to docker group
+      user:
+        name: vagrant
+        group: docker
+        append: yes
+
+    - name: Start docker
+      systemd:
+        state: started
+        name: docker
+        enabled: yes
+
 - name: Disable swap for kubernetes
   block:
-    - name: swapoff (1/2)
+    - name: Disable swap for kubernetes (1/2) swapoff
       shell: |
         swapoff -a
         #when: kubernetes_installed is changed
-    - name: Modify fstab
+    - name: Disable swap for kubernetes (2/2) modify fstab
       replace:
         path: /etc/fstab
         regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
         replace: '# \1'
           #when: kubernetes_installed is changed
-
 
 
