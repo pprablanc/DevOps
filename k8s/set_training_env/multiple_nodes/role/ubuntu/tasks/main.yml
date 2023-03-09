@@ -176,9 +176,11 @@
         regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
         replace: '# \1'
 
-
-
-
-#- name: default kubelet
-#  shell: echo "KUBELET_EXTRA_ARGS=--node-ip="$(ip addr show eth1  | awk '$1 == "inet" { print $2 }' | cut -d/ -f1) | sudo tee /etc/default/kubelet
-#
+- name: Copy post-installation file to create cluster and install calico pod network
+  ansible.builtin.copy:
+    src: ./master_init.sh
+    dest: ~/master_init.sh
+    owner: vagrant
+    mode: u+rx
+  become_user: vagrant
+  when: inventory_hostname in groups['masters']
