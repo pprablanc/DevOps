@@ -1,5 +1,0 @@
-packages_1: ['apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common'] 
-packages_2: ['docker-ce']
-OS: 'xUbuntu_20.04'
-CRIO_VERSION: '1.23'
-

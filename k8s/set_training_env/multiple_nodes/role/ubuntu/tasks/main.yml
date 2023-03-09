@@ -1,0 +1,184 @@
+---
+
+- name: Set modules overlay and br_netfilter
+  block:
+    - name: Write module file
+      ansible.builtin.copy:
+        content: |
+          "overlay
+          br_netfilter"
+        dest: /etc/modules-load.d/k8s.conf
+    - name: Load overlay module
+      community.general.modprobe:
+        name: overlay
+        state: present
+    - name: Load br_netfilter module
+      community.general.modprobe:
+        name: br_netfilter 
+        state: present
+  when: inventory_hostname in groups['masters']
+
+- name: Set sysctl params
+  block:
+    - name: Set net.bridge.bridge-nf-call-iptables
+      ansible.posix.sysctl:
+        sysctl_file: /etc/sysctl.d/k8s.conf
+        name: net.bridge.bridge-nf-call-iptables
+        value: 1
+        state: present
+        reload: true
+    - name: Set net.bridge.bridge-nf-call-ip6tables
+      ansible.posix.sysctl:
+        sysctl_file: /etc/sysctl.d/k8s.conf
+        name: net.bridge.bridge-nf-call-ip6tables
+        value: 1
+        state: present
+        reload: true
+    - name: Set net.ipv4.ip_forward      
+      ansible.posix.sysctl:
+        sysctl_file: /etc/sysctl.d/k8s.conf
+        name: net.ipv4.ip_forward
+        value: 1
+        state: present
+        reload: true
+  when: inventory_hostname in groups['masters']
+
+
+
+- name: Update packages
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+
+- name: Install packages required to get gpg keys
+  package:
+    name: "{{ packages_gpg }}"
+    state: latest
+
+
+- name: Add Docker’s official GPG key
+  block:
+    - name: Create /etc/apt/keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: 0755
+          #    - name: Download Docker's GPG key
+          #      ansible.builtin.get_url:
+          #        url: https://download.docker.com/linux/ubuntu/gpg 
+          #        dest: /etc/apt/keyrings/docker.asc
+    - name: Check if docker.gpg exists
+      block:
+        - name: Store docker.gpg file existence
+          ansible.builtin.stat:
+            path: /etc/apt/keyrings/docker.gpg
+          register: docker_gpg
+        - name: Report if docker.gpg exists
+          debug:
+            msg: "The file docker.gpg exists"
+          when: docker_gpg.stat.exists
+    - name: Download Docker's GPG key
+      ansible.builtin.shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+      when: not docker_gpg.stat.exists
+    - name: Add Docker's GPG key
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        filename: docker.list
+        state: present
+
+- name: Install docker and containerd
+  block:
+    - name: Update packages
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+    - name: Install docker and containerd
+      package:
+        name: "{{ packages_docker_containerd }}"
+        state: latest
+      #sudo systemctl restart containerd
+
+- name: Delete containerd config.toml file
+  ansible.builtin.file:
+    path: /etc/containerd/config.toml
+    state: absent
+
+- name: Restart containerd to reload configuration
+  ansible.builtin.systemd:
+    name: containerd
+    state: restarted
+    enabled: yes
+
+- name: Add user to docker group
+  ansible.builtin.user:
+    name: vagrant
+    groups: docker
+    append: yes
+
+- name: Start docker
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Install kubeadm, kubectl, kubelet
+  block:
+    - name: Update packages
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+    - name: Download Kubernetes's GPG key
+      ansible.builtin.get_url:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg        
+        dest: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+    - name: Add Kubernetes's GPG key
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+        filename: kubernetes.list
+        state: present
+    - name: Update packages
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+    - name: Install packages
+      package:
+        name: "{{ packages_kubernetes }}"
+        state: latest
+    - name: Disable kubernetes package update
+      block:
+        - name: Hold kubeadm
+          ansible.builtin.dpkg_selections:
+            name: kubeadm
+            selection: hold
+        - name: Hold kubectl
+          ansible.builtin.dpkg_selections:
+            name: kubectl
+            selection: hold
+        - name: Hold kubelet
+          ansible.builtin.dpkg_selections:
+            name: kubelet
+            selection: hold
+
+- name: Disable swap for kubernetes
+  block:
+    - name: Disable swap for kubernetes (1/2) swapoff
+      shell: |
+        swapoff -a
+    - name: Disable swap for kubernetes (2/2) modify fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+
+
+
+#- name: default kubelet
+#  shell: echo "KUBELET_EXTRA_ARGS=--node-ip="$(ip addr show eth1  | awk '$1 == "inet" { print $2 }' | cut -d/ -f1) | sudo tee /etc/default/kubelet
+#
