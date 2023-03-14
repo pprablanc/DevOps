@@ -22,7 +22,7 @@ vagrant ssh master
 
 Then init the cluster:
 ```
-sudo kubeadm init --apiserver-advertise-address=192.168.205.100 --pod-network-cidr=192.168.205.100/24 --upload-certs
+sudo kubeadm init --apiserver-advertise-address=192.168.205.100 --pod-network-cidr=192.168.0.0/24 --upload-certs
 ```
 
 Follow the instructions:
